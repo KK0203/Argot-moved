@@ -21,7 +21,7 @@ index 91627ff..45b1662 100644
 -    <name>Spigot</name>
 -    <url>http://www.spigotmc.org</url>
 +    <name>Argot</name>
-+    <url>https://github.com/Poweruser/Migot/</url>
++    <url>https://github.com/ArchMCJP/Argot/</url>
  
      <properties>
          <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -44,7 +44,7 @@ index 91627ff..45b1662 100644
 +                        <id>ex-migot</id>
                          <configuration>
 -                            <format>git-Spigot-%s</format>
-+                            <format>git-Migot-%s</format>
++                            <format>git-Argot-%s</format>
                              <scmDirectory>../</scmDirectory>
 -                            <descriptionProperty>spigot.desc</descriptionProperty>
 +                            <descriptionProperty>migot.desc</descriptionProperty>
