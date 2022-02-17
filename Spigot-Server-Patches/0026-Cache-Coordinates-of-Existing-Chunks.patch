@@ -1,0 +1,113 @@
+From dd8efccbc2772ba7b589869d8fd930302c1dc407 Mon Sep 17 00:00:00 2001
+From: Poweruser <poweruser.rs@hotmail.com>
+Date: Mon, 7 Dec 2015 13:32:49 +0100
+Subject: [PATCH] Cache Coordinates of Existing Chunks
+
+
+diff --git a/src/main/java/net/minecraft/server/ChunkProviderServer.java b/src/main/java/net/minecraft/server/ChunkProviderServer.java
+index be05a04..3f6a043 100644
+--- a/src/main/java/net/minecraft/server/ChunkProviderServer.java
++++ b/src/main/java/net/minecraft/server/ChunkProviderServer.java
+@@ -34,6 +34,24 @@ public class ChunkProviderServer implements IChunkProvider {
+     public LongObjectHashMap<Chunk> chunks = new LongObjectHashMap<Chunk>();
+     public WorldServer world;
+ 
++    // Migot start
++    private ChunkRegionLoader checkedRegionLoader = null;
++
++    public boolean doesChunkExist(int x, int z) {
++        return this.doesChunkExist(new ChunkCoordIntPair(x, z));
++    }
++
++    public boolean doesChunkExist(ChunkCoordIntPair chunkcoordintpair) {
++        if(this.checkedRegionLoader == null && this.chunkLoader instanceof ChunkRegionLoader) {
++            this.checkedRegionLoader = (ChunkRegionLoader) this.chunkLoader;
++        }
++        if(this.checkedRegionLoader != null) {
++            return this.checkedRegionLoader.chunkExists(this.world, chunkcoordintpair);
++        }
++        return false;
++    }
++    // Migot end
++
+     public ChunkProviderServer(WorldServer worldserver, IChunkLoader ichunkloader, IChunkProvider ichunkprovider) {
+         this.emptyChunk = new EmptyChunk(worldserver, Integer.MIN_VALUE, Integer.MIN_VALUE); // Migot
+         this.world = worldserver;
+diff --git a/src/main/java/net/minecraft/server/ChunkRegionLoader.java b/src/main/java/net/minecraft/server/ChunkRegionLoader.java
+index 206e3aa..0d1c8b6 100644
+--- a/src/main/java/net/minecraft/server/ChunkRegionLoader.java
++++ b/src/main/java/net/minecraft/server/ChunkRegionLoader.java
+@@ -29,6 +29,14 @@ public class ChunkRegionLoader implements IChunkLoader, IAsyncChunkSaver {
+     // CraftBukkit start
+     public boolean chunkExists(World world, int i, int j) {
+         ChunkCoordIntPair chunkcoordintpair = new ChunkCoordIntPair(i, j);
++        // Migot start
++        return this.chunkExists(world, chunkcoordintpair);
++    }
++
++    public boolean chunkExists(World world, ChunkCoordIntPair chunkcoordintpair) {
++        int i = chunkcoordintpair.x;
++        int j = chunkcoordintpair.z;
++        // Migot end
+ 
+         if (this.c.contains(chunkcoordintpair)) {
+             if (this.b.containsKey(chunkcoordintpair)) {
+diff --git a/src/main/java/net/minecraft/server/RegionFile.java b/src/main/java/net/minecraft/server/RegionFile.java
+index 348706f..faef694 100644
+--- a/src/main/java/net/minecraft/server/RegionFile.java
++++ b/src/main/java/net/minecraft/server/RegionFile.java
+@@ -25,6 +25,18 @@ public class RegionFile {
+     private int g;
+     private long h;
+ 
++    // Migot start
++    private boolean[] existingChunkCache = new boolean[1024];
++
++    private boolean checkExistingChunkCache(int i, int j) {
++        return this.existingChunkCache[i + j * 32];
++    }
++
++    private void addCoordinatesToCache(int i, int j) {
++        this.existingChunkCache[i + j * 32] = true;
++    }
++    // Migot end
++
+     public RegionFile(File file) {
+         this.b = file;
+         this.g = 0;
+@@ -91,6 +103,11 @@ public class RegionFile {
+         if (this.d(i, j)) {
+             return false;
+         } else {
++            // Migot start
++            if(checkExistingChunkCache(i, j)) {
++                return true;
++            }
++            // Migot end
+             try {
+                 int k = this.e(i, j);
+ 
+@@ -113,6 +130,7 @@ public class RegionFile {
+ 
+                     byte b0 = this.c.readByte();
+                     if (b0 == 1 || b0 == 2) {
++                        this.addCoordinatesToCache(i, j); // Migot
+                         return true;
+                     }
+                 }
+@@ -153,10 +171,12 @@ public class RegionFile {
+                             byte[] abyte;
+ 
+                             if (b0 == 1) {
++                                this.addCoordinatesToCache(i, j); // Migot
+                                 abyte = new byte[j1 - 1];
+                                 this.c.read(abyte);
+                                 return new DataInputStream(new BufferedInputStream(new GZIPInputStream(new ByteArrayInputStream(abyte))));
+                             } else if (b0 == 2) {
++                                this.addCoordinatesToCache(i, j); // Migot
+                                 abyte = new byte[j1 - 1];
+                                 this.c.read(abyte);
+                                 return new DataInputStream(new BufferedInputStream(new InflaterInputStream(new ByteArrayInputStream(abyte))));
+-- 
+2.6.2.windows.1
+
