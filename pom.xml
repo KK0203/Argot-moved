@@ -9,7 +9,7 @@
         <version>7</version>
     </parent>
 
-    <groupId>de.MineTick</groupId>
+    <groupId>de.minetick</groupId>
     <artifactId>migot-parent</artifactId>
     <version>dev-SNAPSHOT</version>
     <packaging>pom</packaging>
